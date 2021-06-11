@@ -1,77 +1,193 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(MaterialApp(
+      home: MainApp(),
+    ));
 
-/// This is the main application widget.
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  static const String _title = 'Flutter Code Sample';
-
+class MainApp extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: _title,
-      home: MyStatefulWidget(),
+  _MainAppState createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  List _todos = [];
+
+  void handleDoneBtn(value) {
+    _todos.remove(value);
+    setState(() => _todos = _todos);
+  }
+
+  Widget todoContainer() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.73,
+      margin: EdgeInsets.only(top: 40),
+      child: ListView.builder(
+          itemCount: _todos.length,
+          itemBuilder: (context, index) {
+            String item = _todos[(_todos.length - 1) - index];
+
+            return ListTileTheme(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 2,
+                      offset: Offset(0, 3), // changes position of shadow
+                    )
+                  ],
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                padding: EdgeInsets.all(10),
+                margin: EdgeInsets.only(top: 5, bottom: 5, right: 30, left: 30),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          margin: EdgeInsets.only(left: 15, right: 10),
+                          child: Text(
+                            item,
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                        onPressed: () => {handleDoneBtn(item)},
+                        child: Text('Done'))
+                  ],
+                ),
+              ),
+            );
+          }),
     );
   }
-}
 
-/// This is the stateful widget that the main application instantiates.
-class MyStatefulWidget extends StatefulWidget {
-  const MyStatefulWidget({Key? key}) : super(key: key);
-
-  @override
-  State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
-}
-
-/// This is the private State class that goes with MyStatefulWidget.
-class _MyStatefulWidgetState extends State<MyStatefulWidget> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
+  Widget noTodoRender() {
+    return Container(
+      alignment: Alignment.center,
+      child: Text(
+        'Jong has no item on todo list.',
+        style: TextStyle(fontSize: 32),
+        textAlign: TextAlign.center,
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void showDi() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return TestAlertDialog((value) => setState(() => _todos.add(value)));
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(MyApp._title),
+        title: Text('Jong\'s todo list'),
       ),
-      body: Center(
-        child: TextField(
-          controller: _controller,
-          onSubmitted: (String value) async {
-            await showDialog<void>(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: const Text('Thanks!'),
-                  content: Text(
-                      'You typed "$value", which has length ${value.characters.length}.'),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
+      body: (_todos.length != 0) ? todoContainer() : noTodoRender(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showDi(),
+        child: Icon(
+          Icons.add,
         ),
+        backgroundColor: Colors.blue,
       ),
     );
   }
+}
+
+class TestAlertDialog extends StatefulWidget {
+  final onPressed;
+  TestAlertDialog(this.onPressed);
+  @override
+  _TestAlertDialogState createState() => _TestAlertDialogState(onPressed);
+}
+
+class _TestAlertDialogState extends State<TestAlertDialog> {
+  final onPressed;
+
+  _TestAlertDialogState(this.onPressed);
+
+  String inputText = '';
+
+  void handleSubmitTodo(value) {
+    onPressed(value);
+    Navigator.of(context).pop();
+  }
+
+  void handleChange(value) {
+    setState(() => inputText = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget addButton = ElevatedButton(
+      child: Text("Add todo"),
+      onPressed: () {
+        Navigator.of(context).pop();
+        onPressed(inputText);
+      },
+    );
+
+    return AlertDialog(
+      title: Text("Add a new Todo."),
+      content: TextField(
+        onSubmitted: handleSubmitTodo,
+        onChanged: handleChange,
+        decoration: InputDecoration(
+            labelText: 'Title', contentPadding: EdgeInsets.only(bottom: 0)),
+      ),
+      actions: [
+        addButton,
+      ],
+    );
+  }
+}
+
+showAlertDialog(BuildContext context, onPressed) {
+  // Create button
+  Widget addButton = ElevatedButton(
+    child: Text("Add todo"),
+    onPressed: () {
+      // Navigator.of(context).pop();
+    },
+  );
+
+  void handleSubmitTodo(value) {
+    onPressed(value);
+    Navigator.of(context).pop();
+  }
+
+  // Create AlertDialog
+  AlertDialog alert = AlertDialog(
+    title: Text("Add a new Todo."),
+    content: TextField(
+      onSubmitted: handleSubmitTodo,
+      decoration: InputDecoration(
+          labelText: 'Title', contentPadding: EdgeInsets.only(bottom: 0)),
+    ),
+    actions: [
+      addButton,
+    ],
+  );
+
+  // show the dialog
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return alert;
+    },
+  );
 }
